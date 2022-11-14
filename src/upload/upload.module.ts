@@ -1,4 +1,3 @@
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { UploadService } from './services/upload.service';
@@ -7,7 +6,6 @@ import { UploadController } from './upload.controller';
 
 @Module({
   imports: [
-    ConfigModule,
     HttpModule.registerAsync({
       useFactory: async () => ({
         baseURL: process.env.HASURA_URL,

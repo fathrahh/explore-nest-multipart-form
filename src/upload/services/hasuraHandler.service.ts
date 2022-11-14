@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { InsertPostAndReelsImages } from '../interface/hasura.interface';
+import { InsertPostAndReelsImages } from '../interface/hasuraHandler.interface';
 
 @Injectable()
 export class HasuraHandlerService {
@@ -41,7 +41,6 @@ export class HasuraHandlerService {
         variables,
       },
     });
-    console.log(response);
     return response.data;
   }
 
@@ -51,10 +50,11 @@ export class HasuraHandlerService {
         satu_data_ins_post{
           id,
           caption,
-          thumbnail
           post_images{
             key
-          }
+          },
+          created_at,
+          updated_at
         }
       }            
     `;

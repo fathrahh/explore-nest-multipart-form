@@ -1,13 +1,18 @@
-import { HasuraHandlerService } from './services/hasuraHandler.service';
+import { Express } from 'express';
 import {
   Controller,
   Post,
   UseInterceptors,
-  UploadedFile,
   Body,
+  Get,
+  UploadedFiles,
 } from '@nestjs/common';
-import { Express } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import {
+  HasuraResponse,
+  SatuDataInsPost,
+} from './interface/hasuraHandler.interface';
+import { HasuraHandlerService } from './services/hasuraHandler.service';
 import { UploadService } from './services/upload.service';
 import { CreatePostDTO } from './dto/create-upload.dto';
 
@@ -19,18 +24,45 @@ export class UploadController {
   ) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('files'))
   async create(
     @Body() body: CreatePostDTO,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
-    const uploadResponse = await this.uploadService.uploadFile(file);
-    const hasuraResponse = await this.hasuraHandlerService.uploadPostAndReels(
-      body.caption,
-      uploadResponse.name,
-      uploadResponse.name,
+    const uploadResponse = await Promise.all(
+      files.map(async (file) => await this.uploadService.uploadFile(file)),
     );
 
-    return hasuraResponse;
+    const uploadImage = uploadResponse.map((key) => key.name);
+
+    const hasuraResponse: HasuraResponse =
+      await this.hasuraHandlerService.uploadPostAndReels(
+        body.caption,
+        uploadImage[0],
+        uploadImage,
+      );
+
+    return hasuraResponse.data;
+  }
+
+  @Get()
+  async getPost() {
+    const {
+      data: { satu_data_ins_post },
+    }: HasuraResponse<SatuDataInsPost> = await this.hasuraHandlerService.getAllPost();
+
+    return await Promise.all(
+      satu_data_ins_post.map(async (value) => {
+        const imageKeys = value.post_images.map(({ key }) => key);
+        return {
+          id: value.id,
+          caption: value.caption,
+          thumbnail: value.thumbnail,
+          created_at: value.created_at,
+          update_at: value.update_at,
+          images: this.uploadService.getFile(imageKeys),
+        };
+      }),
+    );
   }
 }

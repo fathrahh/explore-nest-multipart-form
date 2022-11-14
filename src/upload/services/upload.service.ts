@@ -26,13 +26,10 @@ export class UploadService {
 
   async deleteFile(key: string) {
     const result = await this.client.delete(key);
-
     return result;
   }
 
-  async getFile(key: string): Promise<string> {
-    return this.client.signatureUrl(key, {
-      expires: 3600,
-    });
+  async getFile(keys: string[]): Promise<string[]> {
+    return keys.map((key) => this.client.signatureUrl(key, { expires: 3600 }));
   }
 }
